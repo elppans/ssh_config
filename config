@@ -1,0 +1,120 @@
+# ~/.ssh/config - Configuracao Otimizada para Linux
+# Documentacao: man ssh_config
+# Leia mais em: https://linuxize.com/post/using-the-ssh-config-file/
+
+# Permissões: Garanta que o arquivo tenha as permiss�es corretas para evitar avisos de segurança do OpenSSH:
+# chmod 600 ~/.ssh/config
+
+# ---------------------------------------------------------
+# 1. Configuracoes Globais (Aplicadas a todos os hosts)
+# ---------------------------------------------------------
+Host *
+    # Mantem a conexao ativa (evita timeout em firewalls/NAT)
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+    
+    # Habilita Multiplexacao (Reutiliza a conexao TCP para varias sessoes)
+    # Requisito: mkdir -p ~/.ssh/sockets
+    ControlMaster auto
+    ControlPath ~/.ssh/sockets/%r@%h-%p
+    ControlPersist 10m
+
+    # Performance
+    Compression yes
+    
+    # Seguranca: Forcar uso apenas das chaves definidas (evita spam de chaves)
+    IdentitiesOnly yes
+    
+    # Criptografia preferencial
+    KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256
+    Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com
+
+# ---------------------------------------------------------
+# 2. Organizacao via Include (Estrutura modular)
+# ---------------------------------------------------------
+# Include ~/.ssh/config.d/*.conf
+
+# ---------------------------------------------------------
+# 3. Hosts Específicos
+# ---------------------------------------------------------
+
+# Exemplo: Servidor AUR (Arch Linux)
+Host aur.archlinux.org
+    IdentityFile ~/.ssh/aur
+    User aur
+
+# Exemplo: Servidor Linux (LAN)
+Host linux-server
+    HostName 192.168.122.123
+    User usuario
+    Port 22
+    # Acessar diretório específico ao logar
+    RequestTTY yes
+    RemoteCommand cd ~/Documentos && bash -l
+
+# Exemplo: Linux Virtual (KVM/QEMU)
+Host linux.vm
+    HostName 192.168.122.123
+    User usuario
+    Port 22
+
+# --- SERVIDORES DEDICADOS/PRODUÇÃO ---
+# Exemplo: Host com Chave dedicada
+Host linux.key
+    HostName 192.168.122.123
+    User usuario
+    Port 22
+    IdentityFile ~/.ssh/targaryen.key
+    # Importante: IdentitiesOnly garante que o SSH não tente outras chaves do agente
+    IdentitiesOnly yes
+
+# --- LAB VIRTUALIZAÇÃO (KVM) ---
+Host kvm.*
+    User root
+    IdentityFile ~/.ssh/kvm_id_rsa
+    IdentitiesOnly yes
+
+# --- Gerando o par de chaves ---
+
+# Execute no Terminal
+# ssh-keygen -t ed25519 -C "$USER@$HOST" -f ~/.ssh/targaryen.key
+
+# Adicionando a chave ao Servidor Remoto
+# ssh-copy-id -i ~/.ssh/targaryen.key.pub usuario@192.168.122.123
+
+# Se o servidor não tiver o ssh-copy-id (comum em sistemas minimalistas), use este comando de uma linha para injetar a chave manualmente
+# cat ~/.ssh/targaryen.key.pub | ssh usuario@192.168.122.123 "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys"
+
+# Se der uma falha como esta: "ERROR: Host key verification failed." 
+# Faça este comando para remover a linha do arquivo knows_hosts e tente adicionar novamente
+# ssh-keygen -f "/home/arch/.ssh/known_hosts" -R "192.168.122.123"
+
+# ---------------------------------------------------------
+# 4. Exemplos Avançados (Descomente para usar)
+# ---------------------------------------------------------
+
+# Exemplo: ProxyJump (Acesso atraves de um Gateway/Bastion)
+# Host host-interno
+#     HostName 10.0.0.50
+#     ProxyJump bastion-server
+#     User admin
+
+# Exemplo: Port Forwarding Local (Redirecionar porta remota 80 para localhost:8080)
+# Host web-internal
+#     HostName 192.168.1.10
+#     LocalForward 8080 127.0.0.1:80
+
+# Exemplo: Dynamic Forwarding (SOCKS Proxy para navegar via SSH)
+# Host proxy-server
+#     HostName 1.2.3.4
+#     DynamicForward 1080
+
+# Debugging verbose para hosts problemáticos
+# Host servidor-debug
+#    HostName 10.0.0.99
+#    LogLevel VERBOSE
+
+# Uso de Match (Aplicar config apenas se ping for bem sucedido)
+Match host "serv.*" exec "ping -c 1 192.168.122.123"
+    Compression yes
+    LogLevel INFO
