@@ -1,6 +1,7 @@
 # ~/.ssh/config - Configuracao Otimizada para Linux
 # Documentacao: man ssh_config
 # Leia mais em: https://linuxize.com/post/using-the-ssh-config-file/
+# Mais: https://github.com/elppans/vscodeum/blob/main/documentos/ferramenta_de_acesso_ssh_usando_chave_privada.md
 
 # Permissões: Garanta que o arquivo tenha as permissões corretas para evitar avisos de segurança do OpenSSH:
 # chmod 600 ~/.ssh/config
