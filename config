@@ -2,7 +2,7 @@
 # Documentacao: man ssh_config
 # Leia mais em: https://linuxize.com/post/using-the-ssh-config-file/
 
-# Permissões: Garanta que o arquivo tenha as permiss�es corretas para evitar avisos de segurança do OpenSSH:
+# Permissões: Garanta que o arquivo tenha as permissões corretas para evitar avisos de segurança do OpenSSH:
 # chmod 600 ~/.ssh/config
 
 # ---------------------------------------------------------
